@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.8.3
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_KRAFT_MODE: 'TRUE'
+      # General Settings
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      # As a broker it will store and serve the data. As a controller it will manage the cluster coordination.
+      CLUSTER_ID: '156ftyddrytyujhdfd'
+
+      # KRaft / Controller Settings
+      # This defines which broker are controller and can vote on important cluster decision
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      # (First door is for regular port traffic in port 9092,this is where producer and consumer connect to kafka i.e write the data read the data), and then we have another endpoint or door for controller communication on port 9093 that's where the broker communicate to each other
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      # Defines the address that Kafka tells clients/brokers to connect to.
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      # Required for single-node development
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1 # No backup, just 1 copy
+      # When we put replication factor to 1(this means there is 1 copy of kafka metadata that keeps track of which messages each consumer has read.) 
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+
+    volumes:
+      - kafka_kraft:/var/lib/kafka/data
+
+volumes:
+  kafka_kraft:
